@@ -1,28 +1,31 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import TaskCard from './TaskCard';
-import { formatDayName } from '../data/constants';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-const DayColumn = ({ day, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onDeleteTask, onAddTask, draggingTaskId }) => {
+const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onDeleteTask, onAddTask, draggingTaskId }) => {
   const [newTaskContent, setNewTaskContent] = useState('');
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (newTaskContent.trim()) {
-      onAddTask(day, newTaskContent.trim());
+      onAddTask(date, newTaskContent.trim());
       setNewTaskContent('');
     }
   };
 
+  // Formata a data para o título, ex: "Segunda-Feira, 14 de Julho"
+  const formattedTitle = format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
+
   return (
     <div
-      id={day}
+      id={format(date, 'yyyy-MM-dd')}
       onDrop={onDrop}
       onDragOver={onDragOver}
-      // ATUALIZADO: Classes responsivas para largura
-      className="bg-slate-100/70 rounded-xl p-4 w-full lg:flex-1 lg:min-w-[300px] flex flex-col shadow-sm hover:shadow-lg transition-shadow duration-300"
+      className="bg-slate-100/70 rounded-xl p-4 w-full flex-1 flex flex-col shadow-sm"
     >
-      <h2 className="text-xl font-bold text-slate-700 mb-5 text-center capitalize tracking-wide">{formatDayName(day)}</h2>
+      <h2 className="text-xl font-bold text-slate-700 mb-5 text-center capitalize tracking-wide">{formattedTitle}</h2>
       <div className="flex-grow min-h-[100px]">
         {tasks.map(task => (
           <TaskCard 
@@ -30,7 +33,7 @@ const DayColumn = ({ day, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onD
             task={task} 
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
-            onDelete={(taskId) => onDeleteTask(day, taskId)}
+            onDelete={(taskId) => onDeleteTask(date, taskId)}
             isDragging={draggingTaskId === task.id}
           />
         ))}
