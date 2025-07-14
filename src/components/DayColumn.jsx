@@ -1,48 +1,72 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import TaskCard from './TaskCard';
-import { formatDayName } from '../data/constants';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-const DayColumn = ({ day, tasks, onDrop, onDragOver, onDragStart, onDeleteTask, onAddTask }) => {
+const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onDeleteTask, onAddTask, onToggleUrgent, draggingTaskId }) => {
   const [newTaskContent, setNewTaskContent] = useState('');
+  const [isNewTaskUrgent, setIsNewTaskUrgent] = useState(false);
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (newTaskContent.trim()) {
-      onAddTask(day, newTaskContent.trim());
+      onAddTask(date, newTaskContent.trim(), isNewTaskUrgent);
       setNewTaskContent('');
+      setIsNewTaskUrgent(false);
     }
   };
 
+  const formattedTitle = format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
+
   return (
     <div
-      id={day}
+      id={format(date, 'yyyy-MM-dd')}
       onDrop={onDrop}
       onDragOver={onDragOver}
-      className="bg-gray-100/80 rounded-xl p-4 flex-1 min-w-[280px] flex flex-col"
+      className="bg-slate-100/70 rounded-xl p-4 w-full flex-1 flex flex-col shadow-sm"
     >
-      <h2 className="text-xl font-bold text-gray-700 mb-4 text-center capitalize">{formatDayName(day)}</h2>
+      <h2 className="text-xl font-bold text-slate-700 mb-5 text-center capitalize tracking-wide">{formattedTitle}</h2>
       <div className="flex-grow min-h-[100px]">
         {tasks.map(task => (
-          <TaskCard key={task.id} task={task} onDragStart={onDragStart} onDelete={(taskId) => onDeleteTask(day, taskId)} />
+          <TaskCard 
+            key={task.id} 
+            task={task} 
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+            onDelete={(taskId) => onDeleteTask(date, taskId)}
+            onToggleUrgent={(taskId) => onToggleUrgent(date, taskId)}
+            isDragging={draggingTaskId === task.id}
+          />
         ))}
         {tasks.length === 0 && (
-            <div className="text-center text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg h-full flex items-center justify-center">
+            <div className="text-center text-slate-400 p-4 border-2 border-dashed border-slate-300 rounded-lg h-full flex items-center justify-center">
                 <span>Nenhuma tarefa.</span>
             </div>
         )}
       </div>
-      <form onSubmit={handleAddTask} className="mt-4 flex items-center gap-2">
-        <input
-          type="text"
-          value={newTaskContent}
-          onChange={(e) => setNewTaskContent(e.target.value)}
-          placeholder="Nova tarefa..."
-          className="flex-grow p-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        />
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors" aria-label="Adicionar tarefa">
-          <Plus className="h-5 w-5" />
-        </button>
+      <form onSubmit={handleAddTask} className="mt-4 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newTaskContent}
+            onChange={(e) => setNewTaskContent(e.target.value)}
+            placeholder="Nova tarefa..."
+            className="flex-grow p-2 rounded-md border bg-white border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow"
+          />
+          <button type="submit" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 active:bg-blue-700 transition-colors transform hover:scale-105" aria-label="Adicionar tarefa">
+            <Plus className="h-5 w-5" />
+          </button>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer self-start">
+          <input
+            type="checkbox"
+            checked={isNewTaskUrgent}
+            onChange={(e) => setIsNewTaskUrgent(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          Marcar como urgente
+        </label>
       </form>
     </div>
   );
