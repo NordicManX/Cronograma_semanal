@@ -4,18 +4,19 @@ import TaskCard from './TaskCard';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onDeleteTask, onAddTask, draggingTaskId }) => {
+const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onDeleteTask, onAddTask, onToggleUrgent, draggingTaskId }) => {
   const [newTaskContent, setNewTaskContent] = useState('');
+  const [isNewTaskUrgent, setIsNewTaskUrgent] = useState(false);
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (newTaskContent.trim()) {
-      onAddTask(date, newTaskContent.trim());
+      onAddTask(date, newTaskContent.trim(), isNewTaskUrgent);
       setNewTaskContent('');
+      setIsNewTaskUrgent(false);
     }
   };
 
-  // Formata a data para o título, ex: "Segunda-Feira, 14 de Julho"
   const formattedTitle = format(date, "EEEE, d 'de' MMMM", { locale: ptBR });
 
   return (
@@ -34,6 +35,7 @@ const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, on
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onDelete={(taskId) => onDeleteTask(date, taskId)}
+            onToggleUrgent={(taskId) => onToggleUrgent(date, taskId)}
             isDragging={draggingTaskId === task.id}
           />
         ))}
@@ -43,17 +45,28 @@ const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, on
             </div>
         )}
       </div>
-      <form onSubmit={handleAddTask} className="mt-4 flex items-center gap-2">
-        <input
-          type="text"
-          value={newTaskContent}
-          onChange={(e) => setNewTaskContent(e.target.value)}
-          placeholder="Nova tarefa..."
-          className="flex-grow p-2 rounded-md border bg-white border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow"
-        />
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 active:bg-blue-700 transition-colors transform hover:scale-105" aria-label="Adicionar tarefa">
-          <Plus className="h-5 w-5" />
-        </button>
+      <form onSubmit={handleAddTask} className="mt-4 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={newTaskContent}
+            onChange={(e) => setNewTaskContent(e.target.value)}
+            placeholder="Nova tarefa..."
+            className="flex-grow p-2 rounded-md border bg-white border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow"
+          />
+          <button type="submit" className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 active:bg-blue-700 transition-colors transform hover:scale-105" aria-label="Adicionar tarefa">
+            <Plus className="h-5 w-5" />
+          </button>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer self-start">
+          <input
+            type="checkbox"
+            checked={isNewTaskUrgent}
+            onChange={(e) => setIsNewTaskUrgent(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          Marcar como urgente
+        </label>
       </form>
     </div>
   );

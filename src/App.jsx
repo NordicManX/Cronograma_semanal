@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Trash2, Eraser } from 'lucide-react';
-import { format, addMonths, parseISO } from 'date-fns';
+import { Trash2, Eraser, Calendar, X, Star } from 'lucide-react';
+import { format, addMonths } from 'date-fns';
 import DayColumn from './components/DayColumn';
 import ConfirmationModal from './components/ConfirmationModal';
 import CalendarSidebar from './components/CalendarSidebar';
@@ -22,6 +22,7 @@ const App = () => {
   const [showClearModal, setShowClearModal] = useState(false);
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverDate, setDragOverDate] = useState(null);
+  const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('monthlyPlannerTasks', JSON.stringify(tasksByDate));
@@ -61,7 +62,6 @@ const App = () => {
         newTasks[targetDateStr].push(draggedTask);
       }
 
-      // Limpa o array do dia de origem se ficar vazio
       if (newTasks[sourceDateStr].length === 0) {
         delete newTasks[sourceDateStr];
       }
@@ -115,10 +115,10 @@ const App = () => {
     return null;
   };
 
-  const handleAddTask = (date, content) => {
+  const handleAddTask = (date, content, isUrgent = false) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const newTaskId = `task-${new Date().getTime()}`;
-    const newTask = { id: newTaskId, content };
+    const newTask = { id: newTaskId, content, isUrgent };
     setTasksByDate(prev => ({
       ...prev,
       [dateStr]: [...(prev[dateStr] || []), newTask]
@@ -137,15 +137,32 @@ const App = () => {
     });
   };
 
+  const handleToggleUrgent = (date, taskId) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    setTasksByDate(prev => {
+      const newTasks = { ...prev };
+      if (!newTasks[dateStr]) return prev;
+
+      newTasks[dateStr] = newTasks[dateStr].map(task => 
+        task.id === taskId ? { ...task, isUrgent: !task.isUrgent } : task
+      );
+      return newTasks;
+    });
+  };
+
   const handleClearConfirm = () => {
     setTasksByDate({});
     setShowClearModal(false);
   };
   
   const handleResetConfirm = () => {
-    // A função de reset agora apenas limpa o cronograma
     setTasksByDate({});
     setShowResetModal(false);
+  };
+
+  const handleDateSelectAndClose = (date) => {
+    setSelectedDate(date);
+    setIsMobileCalendarOpen(false);
   };
 
   return (
@@ -156,7 +173,16 @@ const App = () => {
       <div className="h-screen w-full font-sans text-gray-900 bg-gradient-to-br from-sky-50 via-slate-50 to-slate-200 flex flex-col">
         <header className="bg-white/80 backdrop-blur-md p-4 z-10 border-b shrink-0">
           <div className="container mx-auto flex justify-between items-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Meu Cronograma Mensal</h1>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <button 
+                  onClick={() => setIsMobileCalendarOpen(true)}
+                  className="p-2 rounded-full hover:bg-slate-200 lg:hidden"
+                  aria-label="Abrir calendário"
+                >
+                  <Calendar className="h-6 w-6 text-slate-700" />
+                </button>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Meu Cronograma Mensal</h1>
+              </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <button onClick={() => setShowClearModal(true)} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 active:bg-amber-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
                     <Eraser className="h-4 w-4" />
@@ -170,18 +196,49 @@ const App = () => {
           </div>
         </header>
         
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-          <CalendarSidebar
-            currentDate={currentDate}
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            onMonthChange={handleMonthChange}
-            tasksByDate={tasksByDate}
-            onDropOnDate={handleDropOnDate}
-            dragOverDate={dragOverDate}
-            onDragEnterDate={setDragOverDate}
-            onDragLeaveDate={() => setDragOverDate(null)}
-          />
+        <div className="flex-1 flex flex-row overflow-hidden">
+          <div className="hidden lg:flex lg:flex-shrink-0">
+            <CalendarSidebar
+              currentDate={currentDate}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              onMonthChange={handleMonthChange}
+              tasksByDate={tasksByDate}
+              onDropOnDate={handleDropOnDate}
+              dragOverDate={dragOverDate}
+              onDragEnterDate={setDragOverDate}
+              onDragLeaveDate={() => setDragOverDate(null)}
+            />
+          </div>
+
+          {isMobileCalendarOpen && (
+            <div className="fixed inset-0 z-30 lg:hidden animate-fade-in">
+              <div 
+                className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+                onClick={() => setIsMobileCalendarOpen(false)}
+              ></div>
+              <div className="relative bg-slate-50 h-full w-full max-w-xs flex flex-col shadow-xl">
+                <div className="p-2 flex justify-end">
+                  <button onClick={() => setIsMobileCalendarOpen(false)} className="p-2 -mr-2 -mt-2">
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <CalendarSidebar
+                    currentDate={currentDate}
+                    selectedDate={selectedDate}
+                    onDateSelect={handleDateSelectAndClose}
+                    onMonthChange={handleMonthChange}
+                    tasksByDate={tasksByDate}
+                    onDropOnDate={handleDropOnDate}
+                    dragOverDate={dragOverDate}
+                    onDragEnterDate={setDragOverDate}
+                    onDragLeaveDate={() => setDragOverDate(null)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
             <DayColumn
@@ -193,10 +250,14 @@ const App = () => {
               onDragEnd={handleDragEnd}
               onDeleteTask={handleDeleteTask}
               onAddTask={handleAddTask}
+              onToggleUrgent={handleToggleUrgent}
               draggingTaskId={draggingTaskId}
             />
           </main>
         </div>
+        <footer className="text-center p-4 text-slate-500 text-sm shrink-0 border-t bg-slate-100/70">
+            <p>Desenvolvido por NordicManX com React (Vite) e Go. Arraste as tarefas para reorganizar.</p>
+        </footer>
       </div>
     </>
   );
