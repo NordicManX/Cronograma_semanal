@@ -148,7 +148,7 @@ function App() {
           </div>
         </main>
         <footer className="text-center p-4 text-slate-500 text-sm">
-          <p>Desenvolvido com React (Vite) e Go. Arraste as tarefas para reorganizar.</p>
+          <p>Desenvolvido por NordicManX, com React (Vite) e Go. Arraste as tarefas para reorganizar.</p>
         </footer>
       </div>
     </>
