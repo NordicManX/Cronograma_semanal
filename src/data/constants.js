@@ -39,7 +39,6 @@ export const daysOfWeek = [
   "domingo",
 ];
 
-// Função auxiliar para formatar os nomes dos dias para exibição
 export const formatDayName = (day) => {
     return day.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
 }

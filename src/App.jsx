@@ -16,20 +16,25 @@ function App() {
   });
 
   const [showResetModal, setShowResetModal] = useState(false);
+  const [draggingTaskId, setDraggingTaskId] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('weeklyPlannerTasks', JSON.stringify(tasksByDay));
   }, [tasksByDay]);
 
   const handleDragStart = (e) => {
+    setDraggingTaskId(e.target.id);
     e.dataTransfer.setData("taskId", e.target.id);
+  };
+  
+  const handleDragEnd = () => {
+    setDraggingTaskId(null);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
   };
 
-  // <<< INÍCIO DA LÓGICA ATUALIZADA >>>
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -37,12 +42,10 @@ function App() {
     const taskId = e.dataTransfer.getData("taskId");
     if (!taskId) return;
 
-    // Encontra a coluna de destino
-    const targetColumnEl = e.target.closest('.bg-gray-100\\/80');
+    const targetColumnEl = e.target.closest('.bg-slate-100\\/70');
     if (!targetColumnEl) return;
     const targetDay = targetColumnEl.id;
 
-    // Encontra o dia de origem da tarefa
     let sourceDay;
     for (const day in tasksByDay) {
       if (tasksByDay[day].some(t => t.id === taskId)) {
@@ -52,47 +55,31 @@ function App() {
     }
     if (!sourceDay) return;
 
-    // Pega o objeto da tarefa que está a ser arrastada
     const draggedTask = tasksByDay[sourceDay].find(t => t.id === taskId);
     if (!draggedTask) return;
 
-    // Encontra a tarefa de destino (sobre a qual soltámos) para saber a posição
     const targetTaskEl = e.target.closest('.cursor-grab');
     const targetTaskId = targetTaskEl ? targetTaskEl.id : null;
 
-    // Evita soltar uma tarefa sobre ela mesma
-    if (taskId === targetTaskId) {
-      return;
-    }
+    if (taskId === targetTaskId) return;
 
-    // Atualiza o estado de forma imutável
     setTasksByDay(prev => {
-      // Cria uma cópia profunda para evitar mutações inesperadas
       const newTasksByDay = JSON.parse(JSON.stringify(prev));
-
-      // 1. Remove a tarefa da sua posição original
       const sourceTasks = newTasksByDay[sourceDay];
       const taskIndex = sourceTasks.findIndex(t => t.id === taskId);
       sourceTasks.splice(taskIndex, 1);
-
-      // 2. Encontra o ponto de inserção correto na lista do dia de destino
       const targetTasks = newTasksByDay[targetDay];
-      let insertAtIndex = targetTasks.length; // Padrão: insere no final
-
+      let insertAtIndex = targetTasks.length;
       if (targetTaskId) {
         const dropTargetIndex = targetTasks.findIndex(t => t.id === targetTaskId);
         if (dropTargetIndex !== -1) {
-          insertAtIndex = dropTargetIndex; // Insere antes da tarefa de destino
+          insertAtIndex = dropTargetIndex;
         }
       }
-      
-      // 3. Insere a tarefa arrastada na nova posição
       targetTasks.splice(insertAtIndex, 0, draggedTask);
-
       return newTasksByDay;
     });
   };
-  // <<< FIM DA LÓGICA ATUALIZADA >>>
 
   const handleAddTask = (day, content) => {
     const newTaskId = `task-${new Date().getTime()}`;
@@ -125,22 +112,25 @@ function App() {
             onCancel={() => setShowResetModal(false)}
         />
       )}
-      <div className="bg-gray-50 min-h-screen font-sans text-gray-900">
-        <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
+      <div className="min-h-screen w-full font-sans text-gray-900 bg-gradient-to-br from-sky-50 via-slate-50 to-slate-200">
+        <header className="bg-white/80 backdrop-blur-md p-4 sticky top-0 z-10 border-b">
           <div className="container mx-auto flex justify-between items-center">
-              <h1 className="text-3xl font-bold text-blue-600">Meu Cronograma Semanal</h1>
+              {/* ATUALIZADO: Tamanho do título responsivo */}
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Meu Cronograma Semanal</h1>
               <button 
                   onClick={() => setShowResetModal(true)}
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 active:bg-red-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105"
               >
                   <Trash2 className="h-4 w-4" />
-                  Resetar
+                  {/* ATUALIZADO: Esconde o texto em ecrãs muito pequenos */}
+                  <span className="hidden sm:inline">Resetar</span>
               </button>
           </div>
         </header>
         
         <main className="p-4 sm:p-6 md:p-8">
-          <div className="flex gap-6 overflow-x-auto pb-4">
+          {/* ATUALIZADO: Layout de colunas responsivo */}
+          <div className="flex flex-col lg:flex-row gap-6 lg:overflow-x-auto lg:pb-4">
             {daysOfWeek.map(day => (
               <DayColumn
                 key={day}
@@ -149,14 +139,16 @@ function App() {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
                 onDeleteTask={handleDeleteTask}
                 onAddTask={handleAddTask}
+                draggingTaskId={draggingTaskId}
               />
             ))}
           </div>
         </main>
-        <footer className="text-center p-4 text-gray-500 text-sm">
-          <p>Desenvolvido por NordicManX, com React (Vite) e Go. Arraste as tarefas para reorganizar.</p>
+        <footer className="text-center p-4 text-slate-500 text-sm">
+          <p>Desenvolvido com React (Vite) e Go. Arraste as tarefas para reorganizar.</p>
         </footer>
       </div>
     </>
