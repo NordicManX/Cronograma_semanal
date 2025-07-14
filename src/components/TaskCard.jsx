@@ -1,8 +1,7 @@
 import { Trash2, GripVertical } from 'lucide-react';
 
-// Adicionadas as props 'isDragging' e 'onDragEnd'
 const TaskCard = ({ task, onDragStart, onDragEnd, onDelete, isDragging }) => {
-  // Classes condicionais para o estilo de "arrastar"
+
   const draggingStyles = isDragging ? 'opacity-50 rotate-2 shadow-lg' : 'hover:scale-105 hover:shadow-md';
 
   return (
@@ -10,8 +9,8 @@ const TaskCard = ({ task, onDragStart, onDragEnd, onDelete, isDragging }) => {
       id={task.id}
       draggable
       onDragStart={onDragStart}
-      onDragEnd={onDragEnd} // Limpa o estado de "arrastar"
-      // Classes de estilo atualizadas
+      onDragEnd={onDragEnd} 
+      
       className={`bg-white p-3 mb-3 rounded-lg shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing flex justify-between items-center group transition-all duration-300 ease-in-out ${draggingStyles}`}
     >
       <div className="flex items-center">

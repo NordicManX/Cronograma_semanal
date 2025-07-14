@@ -115,21 +115,20 @@ function App() {
       <div className="min-h-screen w-full font-sans text-gray-900 bg-gradient-to-br from-sky-50 via-slate-50 to-slate-200">
         <header className="bg-white/80 backdrop-blur-md p-4 sticky top-0 z-10 border-b">
           <div className="container mx-auto flex justify-between items-center">
-              {/* ATUALIZADO: Tamanho do título responsivo */}
+          
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Meu Cronograma Semanal</h1>
               <button 
                   onClick={() => setShowResetModal(true)}
                   className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 active:bg-red-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105"
               >
                   <Trash2 className="h-4 w-4" />
-                  {/* ATUALIZADO: Esconde o texto em ecrãs muito pequenos */}
+               
                   <span className="hidden sm:inline">Resetar</span>
               </button>
           </div>
         </header>
         
         <main className="p-4 sm:p-6 md:p-8">
-          {/* ATUALIZADO: Layout de colunas responsivo */}
           <div className="flex flex-col lg:flex-row gap-6 lg:overflow-x-auto lg:pb-4">
             {daysOfWeek.map(day => (
               <DayColumn
