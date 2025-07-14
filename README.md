@@ -31,7 +31,7 @@ Para executar o frontend localmente, siga estes passos. É necessário ter o [No
 Se estiver a usar git:
 
 ```bash
-git clone <URL_DO_SEU_REPOSITORIO>
+git clone https://github.com/NordicManX/Cronograma_semanal.git
 cd meu-cronograma/vite-project
 ```
 
