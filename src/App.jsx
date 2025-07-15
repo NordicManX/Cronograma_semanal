@@ -150,12 +150,17 @@ const App = () => {
     });
   };
 
-  const handleClearConfirm = () => {
-    setTasksByDate({});
+  const handleClearDayConfirm = () => {
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    setTasksByDate(prev => {
+      const newTasks = { ...prev };
+      delete newTasks[dateStr];
+      return newTasks;
+    });
     setShowClearModal(false);
   };
   
-  const handleResetConfirm = () => {
+  const handleResetAllConfirm = () => {
     setTasksByDate({});
     setShowResetModal(false);
   };
@@ -167,8 +172,20 @@ const App = () => {
 
   return (
     <>
-      {showClearModal && <ConfirmationModal message="Tem certeza que deseja limpar todas as tarefas?" onConfirm={handleClearConfirm} onCancel={() => setShowClearModal(false)} />}
-      {showResetModal && <ConfirmationModal message="Tem certeza que deseja resetar o cronograma para um estado vazio?" onConfirm={handleResetConfirm} onCancel={() => setShowResetModal(false)} />}
+      {showClearModal && (
+        <ConfirmationModal 
+          message="Tem certeza que deseja limpar as tarefas deste dia?" 
+          onConfirm={handleClearDayConfirm} 
+          onCancel={() => setShowClearModal(false)} 
+        />
+      )}
+      {showResetModal && (
+        <ConfirmationModal 
+          message="Tem certeza que deseja apagar TODAS as tarefas do cronograma? Esta ação não pode ser desfeita." 
+          onConfirm={handleResetAllConfirm} 
+          onCancel={() => setShowResetModal(false)} 
+        />
+      )}
       
       <div className="h-screen w-full font-sans text-gray-900 bg-gradient-to-br from-sky-50 via-slate-50 to-slate-200 flex flex-col">
         <header className="bg-white/80 backdrop-blur-md p-4 z-10 border-b shrink-0">
@@ -186,11 +203,11 @@ const App = () => {
               <div className="flex items-center gap-2 sm:gap-4">
                 <button onClick={() => setShowClearModal(true)} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 active:bg-amber-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
                     <Eraser className="h-4 w-4" />
-                    <span className="hidden sm:inline">Limpar</span>
+                    <span className="hidden sm:inline">Limpar Dia</span>
                 </button>
                 <button onClick={() => setShowResetModal(true)} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 active:bg-red-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
                     <Trash2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Resetar</span>
+                    <span className="hidden sm:inline">Resetar Tudo</span>
                 </button>
               </div>
           </div>

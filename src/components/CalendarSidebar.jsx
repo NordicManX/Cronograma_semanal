@@ -1,4 +1,3 @@
-import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, getDaysInMonth, startOfMonth, getDay, isSameDay, isToday, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -7,7 +6,7 @@ import { WEEKDAYS_SHORT } from '../data/constants';
 const CalendarSidebar = ({ currentDate, selectedDate, onDateSelect, onMonthChange, tasksByDate, onDropOnDate, dragOverDate, onDragEnterDate, onDragLeaveDate }) => {
   const monthStart = startOfMonth(currentDate);
   const daysInMonth = getDaysInMonth(currentDate);
-  const firstDayOfWeek = getDay(monthStart); // 0=Dom, 1=Seg, ...
+  const firstDayOfWeek = getDay(monthStart);
 
   const days = eachDayOfInterval({
     start: monthStart,
@@ -15,7 +14,7 @@ const CalendarSidebar = ({ currentDate, selectedDate, onDateSelect, onMonthChang
   });
 
   return (
-    <nav className="w-full lg:w-80 bg-slate-100/70 p-4 border-b lg:border-r h-full flex flex-col">
+    <nav className="w-full bg-transparent p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
         <button onClick={() => onMonthChange(-1)} className="p-2 rounded-full hover:bg-slate-200">
           <ChevronLeft className="h-6 w-6" />
@@ -36,7 +35,9 @@ const CalendarSidebar = ({ currentDate, selectedDate, onDateSelect, onMonthChang
         {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`empty-${i}`} />)}
         {days.map(day => {
           const dateStr = format(day, 'yyyy-MM-dd');
-          const hasTasks = tasksByDate[dateStr] && tasksByDate[dateStr].length > 0;
+          const dateTasks = tasksByDate[dateStr] || [];
+          const hasTasks = dateTasks.length > 0;
+          const hasUrgentTasks = dateTasks.some(task => task.isUrgent);
           
           const isSelected = isSameDay(day, selectedDate);
           const isCurrentToday = isToday(day);
@@ -65,7 +66,9 @@ const CalendarSidebar = ({ currentDate, selectedDate, onDateSelect, onMonthChang
               className={dayClasses}
             >
               <span>{format(day, 'd')}</span>
-              {hasTasks && <div className="absolute bottom-1 h-1.5 w-1.5 bg-green-500 rounded-full"></div>}
+              {hasTasks && (
+                <div className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${hasUrgentTasks ? 'bg-red-500' : 'bg-green-500'}`}></div>
+              )}
             </div>
           );
         })}
