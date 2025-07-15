@@ -25,7 +25,6 @@ const App = () => {
   const [dragOverDate, setDragOverDate] = useState(null);
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
   
-  // Novos estados
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -44,7 +43,6 @@ const App = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
   
-  // Fecha o menu de configurações se clicar fora dele
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target)) {
@@ -223,7 +221,15 @@ const App = () => {
                 >
                   <Calendar className="h-6 w-6 text-slate-700 dark:text-slate-300" />
                 </button>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">Planner Tasks</h1>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-l-lg text-white font-bold text-lg">P</div>
+                    <div className="flex items-center justify-center w-8 h-8 bg-slate-700 dark:bg-slate-600 rounded-r-lg text-white font-bold text-lg">T</div>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 hidden sm:block">
+                    Planner Tasks
+                  </h1>
+                </div>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <button onClick={() => setShowClearModal(true)} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 active:bg-amber-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
