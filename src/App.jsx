@@ -223,7 +223,7 @@ const App = () => {
                 >
                   <Calendar className="h-6 w-6 text-slate-700 dark:text-slate-300" />
                 </button>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">Meu Cronograma Mensal</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">Planner Tasks</h1>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <button onClick={() => setShowClearModal(true)} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 active:bg-amber-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
