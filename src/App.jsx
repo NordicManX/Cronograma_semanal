@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Trash2, Eraser, Calendar, X, Star } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Trash2, Eraser, Calendar, X, Star, Settings } from 'lucide-react';
 import { format, addMonths } from 'date-fns';
 import DayColumn from './components/DayColumn';
 import ConfirmationModal from './components/ConfirmationModal';
 import CalendarSidebar from './components/CalendarSidebar';
+import SettingsMenu from './components/SettingsMenu';
 
 const App = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -23,10 +24,36 @@ const App = () => {
   const [draggingTaskId, setDraggingTaskId] = useState(null);
   const [dragOverDate, setDragOverDate] = useState(null);
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
+  
+  // Novos estados
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const settingsMenuRef = useRef(null);
 
   useEffect(() => {
     localStorage.setItem('monthlyPlannerTasks', JSON.stringify(tasksByDate));
   }, [tasksByDate]);
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
+  // Fecha o menu de configurações se clicar fora dele
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (settingsMenuRef.current && !settingsMenuRef.current.contains(event.target)) {
+        setIsSettingsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [settingsMenuRef]);
 
   const handleMonthChange = (amount) => {
     setCurrentDate(prev => addMonths(prev, amount));
@@ -90,7 +117,7 @@ const App = () => {
     const sourceDateStr = findTaskDate(taskId);
     if (!sourceDateStr) return;
 
-    const targetColumnEl = e.target.closest('.bg-slate-100\\/70');
+    const targetColumnEl = e.target.closest('.bg-slate-100\\/70, .dark\\:bg-slate-800\\/50');
     if (!targetColumnEl) return;
     const targetDateStr = targetColumnEl.id;
     
@@ -170,35 +197,33 @@ const App = () => {
     setIsMobileCalendarOpen(false);
   };
 
+  const handleToggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setIsSettingsOpen(false);
+  };
+
+  const handleAuthAction = () => {
+    setIsLoggedIn(prev => !prev);
+    setIsSettingsOpen(false);
+  };
+
   return (
     <>
-      {showClearModal && (
-        <ConfirmationModal 
-          message="Tem certeza que deseja limpar as tarefas deste dia?" 
-          onConfirm={handleClearDayConfirm} 
-          onCancel={() => setShowClearModal(false)} 
-        />
-      )}
-      {showResetModal && (
-        <ConfirmationModal 
-          message="Tem certeza que deseja apagar TODAS as tarefas do cronograma? Esta ação não pode ser desfeita." 
-          onConfirm={handleResetAllConfirm} 
-          onCancel={() => setShowResetModal(false)} 
-        />
-      )}
+      {showClearModal && <ConfirmationModal message="Tem certeza que deseja limpar as tarefas deste dia?" onConfirm={handleClearDayConfirm} onCancel={() => setShowClearModal(false)} />}
+      {showResetModal && <ConfirmationModal message="Tem certeza que deseja apagar TODAS as tarefas do cronograma? Esta ação não pode ser desfeita." onConfirm={handleResetAllConfirm} onCancel={() => setShowResetModal(false)} />}
       
-      <div className="h-screen w-full font-sans text-gray-900 bg-gradient-to-br from-sky-50 via-slate-50 to-slate-200 flex flex-col">
-        <header className="bg-white/80 backdrop-blur-md p-4 z-10 border-b shrink-0">
+      <div className="h-screen w-full font-sans text-gray-900 bg-gradient-to-br from-sky-50 to-slate-200 dark:from-slate-900 dark:to-slate-800 dark:text-slate-200 flex flex-col">
+        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 z-10 border-b dark:border-slate-700 shrink-0">
           <div className="container mx-auto flex justify-between items-center">
               <div className="flex items-center gap-2 sm:gap-4">
                 <button 
                   onClick={() => setIsMobileCalendarOpen(true)}
-                  className="p-2 rounded-full hover:bg-slate-200 lg:hidden"
+                  className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 lg:hidden"
                   aria-label="Abrir calendário"
                 >
-                  <Calendar className="h-6 w-6 text-slate-700" />
+                  <Calendar className="h-6 w-6 text-slate-700 dark:text-slate-300" />
                 </button>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Meu Cronograma Mensal</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100">Meu Cronograma Mensal</h1>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <button onClick={() => setShowClearModal(true)} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 active:bg-amber-700 transition-all duration-200 flex items-center gap-2 transform hover:scale-105">
@@ -209,6 +234,19 @@ const App = () => {
                     <Trash2 className="h-4 w-4" />
                     <span className="hidden sm:inline">Resetar Tudo</span>
                 </button>
+                <div className="relative" ref={settingsMenuRef}>
+                  <button onClick={() => setIsSettingsOpen(prev => !prev)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <Settings className="h-6 w-6 text-slate-700 dark:text-slate-300" />
+                  </button>
+                  {isSettingsOpen && (
+                    <SettingsMenu 
+                      isLoggedIn={isLoggedIn}
+                      onAuthAction={handleAuthAction}
+                      theme={theme}
+                      onToggleTheme={handleToggleTheme}
+                    />
+                  )}
+                </div>
               </div>
           </div>
         </header>
@@ -234,7 +272,7 @@ const App = () => {
                 className="absolute inset-0 bg-black/30 backdrop-blur-sm"
                 onClick={() => setIsMobileCalendarOpen(false)}
               ></div>
-              <div className="relative bg-slate-50 h-full w-full max-w-xs flex flex-col shadow-xl">
+              <div className="relative bg-slate-50 dark:bg-slate-900 h-full w-full max-w-xs flex flex-col shadow-xl">
                 <div className="p-2 flex justify-end">
                   <button onClick={() => setIsMobileCalendarOpen(false)} className="p-2 -mr-2 -mt-2">
                     <X className="h-6 w-6" />
@@ -272,7 +310,7 @@ const App = () => {
             />
           </main>
         </div>
-        <footer className="text-center p-4 text-slate-500 text-sm shrink-0 border-t bg-slate-100/70">
+        <footer className="text-center p-4 text-slate-500 dark:text-slate-400 text-sm shrink-0 border-t dark:border-slate-700 bg-slate-100/70 dark:bg-slate-900/50">
             <p>Desenvolvido por NordicManX com React (Vite) e Go. Arraste as tarefas para reorganizar.</p>
         </footer>
       </div>

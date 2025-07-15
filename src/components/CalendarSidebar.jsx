@@ -16,18 +16,18 @@ const CalendarSidebar = ({ currentDate, selectedDate, onDateSelect, onMonthChang
   return (
     <nav className="w-full bg-transparent p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => onMonthChange(-1)} className="p-2 rounded-full hover:bg-slate-200">
+        <button onClick={() => onMonthChange(-1)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
           <ChevronLeft className="h-6 w-6" />
         </button>
-        <h2 className="text-xl font-bold text-slate-700 capitalize">
+        <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200 capitalize">
           {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
         </h2>
-        <button onClick={() => onMonthChange(1)} className="p-2 rounded-full hover:bg-slate-200">
+        <button onClick={() => onMonthChange(1)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
           <ChevronRight className="h-6 w-6" />
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 text-center font-semibold text-slate-500">
+      <div className="grid grid-cols-7 gap-1 text-center font-semibold text-slate-500 dark:text-slate-400">
         {WEEKDAYS_SHORT.map(day => <div key={day}>{day}</div>)}
       </div>
 
@@ -47,9 +47,9 @@ const CalendarSidebar = ({ currentDate, selectedDate, onDateSelect, onMonthChang
           if (isSelected) {
             dayClasses += 'bg-blue-500 text-white font-bold';
           } else if (isCurrentToday) {
-            dayClasses += 'bg-sky-200 text-sky-800 font-bold';
+            dayClasses += 'bg-sky-200 dark:bg-sky-800/50 text-sky-800 dark:text-sky-200 font-bold';
           } else {
-            dayClasses += 'hover:bg-slate-200';
+            dayClasses += 'hover:bg-slate-200 dark:hover:bg-slate-700';
           }
           if (isDragOver) {
             dayClasses += ' border-2 border-dashed border-blue-500';
