@@ -1,20 +1,31 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import api from '../services/api'; // Importa o nosso serviço de API
 
 const LoginPage = ({ onLogin, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error('Por favor, preencha todos os campos.');
       return;
     }
-    // Simula uma chamada de API
-    console.log('Logging in with:', { email, password });
-    toast.success('Login realizado com sucesso!');
-    onLogin(); // Atualiza o estado de autenticação no App.jsx
+    setIsLoading(true);
+    try {
+      // Faz o pedido de login para o backend
+      const response = await api.post('/auth/login', { email, password });
+      
+      toast.success('Login realizado com sucesso!');
+      onLogin(response.data.token); // Passa o token JWT para o App.jsx
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Falha no login. Verifique as suas credenciais.';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,9 +61,10 @@ const LoginPage = ({ onLogin, onNavigate }) => {
           </div>
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={isLoading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            Entrar
+            {isLoading ? 'A entrar...' : 'Entrar'}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600 dark:text-slate-400">

@@ -1,22 +1,32 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
+import api from '../services/api'; // Importa o nosso serviço de API
 
 const RegisterPage = ({ onNavigate }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !email || !password) {
       toast.error('Por favor, preencha todos os campos.');
       return;
     }
-    // Simula uma chamada de API
-    console.log('Registering with:', { username, email, password });
-    toast.success('Registo realizado! Por favor, verifique o seu email.');
-    // Navega para a nova página de verificação
-    onNavigate('verify-email', email);
+    setIsLoading(true);
+    try {
+      // Faz o pedido de registo para o backend
+      await api.post('/auth/register', { username, email, password });
+      
+      toast.success('Registo realizado! Por favor, verifique o seu email.');
+      onNavigate('verify-email', email);
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Falha no registo. Tente novamente.';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,9 +73,10 @@ const RegisterPage = ({ onNavigate }) => {
           </div>
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={isLoading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            Criar Conta
+            {isLoading ? 'A criar conta...' : 'Criar Conta'}
           </button>
         </form>
         <p className="text-center text-sm text-gray-600 dark:text-slate-400">

@@ -9,9 +9,9 @@ import SettingsMenu from './components/SettingsMenu';
 
 const App = () => {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('authToken'));
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState('login'); // 'planner', 'login', 'register', 'verify-email'
+  const [currentPage, setCurrentPage] = useState(isLoggedIn ? 'planner' : 'login');
   const [verificationEmail, setVerificationEmail] = useState('');
   const settingsMenuRef = useRef(null);
 
@@ -41,6 +41,7 @@ const App = () => {
 
   const handleAuthAction = () => {
     if (isLoggedIn) {
+      localStorage.removeItem('authToken'); // Remove o token ao deslogar
       setIsLoggedIn(false);
       setCurrentPage('login');
     } else {
@@ -49,14 +50,15 @@ const App = () => {
     setIsSettingsOpen(false);
   };
   
-  const handleLogin = () => {
+  const handleLogin = (token) => {
+    localStorage.setItem('authToken', token); // Guarda o token no localStorage
     setIsLoggedIn(true);
     setCurrentPage('planner');
   }
   
   const handleNavigate = (page, data) => {
       if (page === 'verify-email') {
-          setVerificationEmail(data); // Guarda o email para a página de verificação
+          setVerificationEmail(data);
       }
       setCurrentPage(page);
   }
@@ -73,7 +75,6 @@ const App = () => {
             if (isLoggedIn) {
                 return <PlannerPage />;
             }
-            // Se não estiver logado, redireciona para o login
             return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} />;
         default:
             return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} />;
