@@ -1,25 +1,27 @@
 package handler
 
 import (
+	"log" // Importa o pacote log
 	"net/http"
 	"time"
 
 	"planner-api/internal/auth"
 	"planner-api/internal/database"
 	"planner-api/internal/model"
+	"planner-api/internal/service" // Importa o nosso novo serviço de email
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// RegisterInput define a estrutura de dados que esperamos para o registo.
+// ... (as structs RegisterInput e LoginInput não mudam) ...
+
 type RegisterInput struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-// Register é o handler para o registo de um novo utilizador.
 func Register(c *gin.Context) {
 	var input RegisterInput
 
@@ -54,16 +56,27 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	// --- ENVIO DO EMAIL DE VERIFICAÇÃO ---
+	// Usamos uma goroutine (go) para enviar o email em segundo plano.
+	// Isto evita que o utilizador tenha de esperar que o email seja enviado para receber a resposta.
+	go func() {
+		err := service.SendVerificationEmail(user.Email, user.VerificationToken)
+		if err != nil {
+			// Apenas registamos o erro no log do servidor, não enviamos um erro ao utilizador.
+			log.Printf("Falha ao enviar o email de verificação para %s: %v", user.Email, err)
+		}
+	}()
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Utilizador registado com sucesso. Verifique o seu email."})
 }
 
-// LoginInput define a estrutura de dados que esperamos para o login.
+// ... (as funções Login e VerifyEmail não mudam) ...
+
 type LoginInput struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-// Login é o handler para a autenticação de um utilizador.
 func Login(c *gin.Context) {
 	var input LoginInput
 
@@ -105,7 +118,6 @@ func Login(c *gin.Context) {
 	})
 }
 
-// VerifyEmail é o handler para verificar a conta de um utilizador.
 func VerifyEmail(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
@@ -125,9 +137,6 @@ func VerifyEmail(c *gin.Context) {
 		return
 	}
 
-	// --- CORREÇÃO APLICADA AQUI ---
-	// Usamos .Model(&user).Updates(...) para garantir que os campos são atualizados corretamente.
-	// Isto é mais explícito e seguro do que .Save().
 	updates := model.User{Verified: true, VerificationToken: ""}
 	database.DB.Model(&user).Updates(updates)
 
