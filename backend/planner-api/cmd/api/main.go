@@ -39,11 +39,13 @@ func main() {
 			authRoutes.GET("/verify", handler.VerifyEmail)
 		}
 
-		// --- ROTAS DE TAREFAS PROTEGIDAS ---
 		taskRoutes := api.Group("/tasks").Use(middleware.AuthMiddleware())
 		{
 			taskRoutes.POST("/", handler.CreateTask)
 			taskRoutes.GET("/:date", handler.GetTasksByDay)
+			// --- NOVAS ROTAS ---
+			taskRoutes.DELETE("/:id", handler.DeleteTask)
+			taskRoutes.PUT("/:id/toggle-urgent", handler.ToggleUrgent)
 		}
 
 		api.GET("/ping", func(c *gin.Context) {

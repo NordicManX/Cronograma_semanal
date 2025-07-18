@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { format, addMonths } from 'date-fns';
+import { format, addMonths, parseISO } from 'date-fns';
 import toast from 'react-hot-toast';
-import api from '../services/api'; // Importa o nosso serviço de API
+import api from '../services/api';
 import DayColumn from '../components/DayColumn';
 import CalendarSidebar from '../components/CalendarSidebar';
 import ConfirmationModal from '../components/ConfirmationModal';
+import { X } from 'lucide-react';
 
 const PlannerPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -17,14 +18,14 @@ const PlannerPage = () => {
   const [dragOverDate, setDragOverDate] = useState(null);
   const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
 
-  // Função para buscar tarefas da API
   const fetchTasks = useCallback(async (date) => {
     setIsLoading(true);
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
       const response = await api.get(`/tasks/${dateStr}`);
-      setTasks(response.data || []); // Garante que tasks é sempre um array
-      setTasksByDateCache(prev => ({ ...prev, [dateStr]: response.data || [] }));
+      const tasksData = response.data || [];
+      setTasks(tasksData);
+      setTasksByDateCache(prev => ({ ...prev, [dateStr]: tasksData }));
     } catch (error) {
       toast.error('Falha ao buscar as tarefas.');
       setTasks([]);
@@ -36,12 +37,83 @@ const PlannerPage = () => {
   useEffect(() => {
     fetchTasks(selectedDate);
   }, [selectedDate, fetchTasks]);
+  
+  const findTaskDate = (taskId) => {
+    // O ID do DOM é uma string, o ID da tarefa (ID) é um número
+    const numericTaskId = parseInt(taskId, 10);
+    for (const date in tasksByDateCache) {
+      if (tasksByDateCache[date].some(t => t.ID === numericTaskId)) {
+        return date;
+      }
+    }
+    return null;
+  };
+
+  const handleDragStart = (e) => {
+    setDraggingTaskId(e.target.id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingTaskId(null);
+    setDragOverDate(null);
+  };
+
+  const handleDropOnDate = async (e, targetDate) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const taskId = draggingTaskId;
+    if (!taskId) return;
+
+    const sourceDateStr = findTaskDate(taskId);
+    const targetDateStr = format(targetDate, 'yyyy-MM-dd');
+    
+    if (!sourceDateStr || sourceDateStr === targetDateStr) {
+        handleDragEnd();
+        return;
+    }
+
+    // Atualização otimista da UI
+    const numericTaskId = parseInt(taskId, 10);
+    const taskToMove = tasksByDateCache[sourceDateStr]?.find(t => t.ID === numericTaskId);
+    if (taskToMove) {
+        setTasksByDateCache(prev => {
+            const newCache = {...prev};
+            // Remove da origem
+            newCache[sourceDateStr] = newCache[sourceDateStr].filter(t => t.ID !== numericTaskId);
+            // Adiciona ao destino
+            newCache[targetDateStr] = [...(newCache[targetDateStr] || []), taskToMove];
+            return newCache;
+        });
+    }
+
+
+    try {
+        await api.put(`/tasks/${taskId}/move`, { date: targetDateStr });
+        toast.success('Tarefa movida com sucesso!');
+        // Sincroniza o dia de origem (que agora tem menos uma tarefa)
+        const sourceDate = parseISO(sourceDateStr);
+        if (sourceDate.getTime() === selectedDate.getTime()) {
+            fetchTasks(sourceDate);
+        }
+        setSelectedDate(targetDate); // Navega para o novo dia
+    } catch (error) {
+        toast.error('Falha ao mover a tarefa.');
+        // Reverte a alteração otimista em caso de erro
+        setTasksByDateCache(prev => {
+            const newCache = {...prev};
+            newCache[targetDateStr] = newCache[targetDateStr].filter(t => t.ID !== numericTaskId);
+            newCache[sourceDateStr] = [...(newCache[sourceDateStr] || []), taskToMove];
+            return newCache;
+        });
+    } finally {
+        handleDragEnd();
+    }
+  };
 
   const handleAddTask = async (date, content, isUrgent) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     try {
       const response = await api.post('/tasks', { content, isUrgent, date: dateStr });
-      // Se a tarefa foi adicionada no dia selecionado, atualiza o estado
       if (dateStr === format(selectedDate, 'yyyy-MM-dd')) {
         setTasks(prev => [...prev, response.data]);
       }
@@ -54,10 +126,7 @@ const PlannerPage = () => {
 
   const handleDeleteTask = async (date, taskId) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    // Guarda as tarefas atuais para o caso de a chamada à API falhar
     const originalTasks = [...tasks];
-    
-    // Atualiza a UI otimisticamente para uma resposta mais rápida
     setTasks(prev => prev.filter(task => task.ID !== taskId));
 
     try {
@@ -72,7 +141,6 @@ const PlannerPage = () => {
       });
     } catch (error) {
       toast.error('Falha ao apagar a tarefa.');
-      // Reverte a alteração se a API falhar
       setTasks(originalTasks);
     }
   };
@@ -80,15 +148,12 @@ const PlannerPage = () => {
   const handleToggleUrgent = async (date, taskId) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const originalTasks = [...tasks];
-
-    // Atualiza a UI otimisticamente
     setTasks(prev => prev.map(task => 
         task.ID === taskId ? { ...task, IsUrgent: !task.IsUrgent } : task
     ));
 
     try {
       const response = await api.put(`/tasks/${taskId}/toggle-urgent`);
-      // Sincroniza o estado com a resposta final da API
       setTasks(prev => prev.map(task => (task.ID === taskId ? response.data : task)));
       setTasksByDateCache(prev => {
           const newCache = {...prev};
@@ -99,13 +164,9 @@ const PlannerPage = () => {
       });
     } catch (error) {
       toast.error('Falha ao atualizar a tarefa.');
-      // Reverte a alteração se a API falhar
       setTasks(originalTasks);
     }
   };
-  
-  // A lógica de Drag-and-Drop e outras funções permanecem semelhantes
-  // A sua implementação com a API será o próximo passo.
 
   return (
     <>
@@ -119,7 +180,10 @@ const PlannerPage = () => {
             onDateSelect={setSelectedDate}
             onMonthChange={setCurrentDate}
             tasksByDate={tasksByDateCache}
-            // ...outras props de drag-and-drop
+            onDropOnDate={handleDropOnDate}
+            dragOverDate={dragOverDate}
+            onDragEnterDate={setDragOverDate}
+            onDragLeaveDate={() => setDragOverDate(null)}
           />
         </div>
 
@@ -145,7 +209,10 @@ const PlannerPage = () => {
                   }}
                   onMonthChange={setCurrentDate}
                   tasksByDate={tasksByDateCache}
-                  // ...outras props de drag-and-drop
+                  onDropOnDate={handleDropOnDate}
+                  dragOverDate={dragOverDate}
+                  onDragEnterDate={setDragOverDate}
+                  onDragLeaveDate={() => setDragOverDate(null)}
                 />
               </div>
             </div>
@@ -164,7 +231,9 @@ const PlannerPage = () => {
               onAddTask={handleAddTask}
               onDeleteTask={handleDeleteTask}
               onToggleUrgent={handleToggleUrgent}
-              // ...outras props
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              // A reordenação vertical ainda não está ligada à API
             />
           )}
         </main>
