@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Calendar, Trash2, Eraser } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import PlannerPage from './pages/PlannerPage';
 import LoginPage from './pages/LoginPage';
@@ -14,6 +14,7 @@ const App = () => {
   const [currentPage, setCurrentPage] = useState(isLoggedIn ? 'planner' : 'login');
   const [verificationEmail, setVerificationEmail] = useState('');
   const settingsMenuRef = useRef(null);
+  const [isMobileCalendarOpen, setIsMobileCalendarOpen] = useState(false);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -41,7 +42,7 @@ const App = () => {
 
   const handleAuthAction = () => {
     if (isLoggedIn) {
-      localStorage.removeItem('authToken'); // Remove o token ao deslogar
+      localStorage.removeItem('authToken');
       setIsLoggedIn(false);
       setCurrentPage('login');
     } else {
@@ -51,7 +52,7 @@ const App = () => {
   };
   
   const handleLogin = (token) => {
-    localStorage.setItem('authToken', token); // Guarda o token no localStorage
+    localStorage.setItem('authToken', token);
     setIsLoggedIn(true);
     setCurrentPage('planner');
   }
@@ -73,7 +74,10 @@ const App = () => {
             return <VerifyEmailPage email={verificationEmail} onNavigate={handleNavigate} />;
         case 'planner':
             if (isLoggedIn) {
-                return <PlannerPage />;
+                return <PlannerPage 
+                  isMobileCalendarOpen={isMobileCalendarOpen} 
+                  setIsMobileCalendarOpen={setIsMobileCalendarOpen}
+                />;
             }
             return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} />;
         default:
@@ -87,14 +91,25 @@ const App = () => {
       <div className="h-screen w-full font-sans text-gray-900 bg-gradient-to-br from-sky-50 to-slate-200 dark:from-slate-900 dark:to-slate-800 dark:text-slate-200 flex flex-col">
         <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md p-4 z-10 border-b dark:border-slate-700 shrink-0">
           <div className="container mx-auto flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center">
-                  <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-l-lg text-white font-bold text-lg">P</div>
-                  <div className="flex items-center justify-center w-8 h-8 bg-slate-700 dark:bg-slate-600 rounded-r-lg text-white font-bold text-lg">T</div>
+              <div className="flex items-center gap-2 sm:gap-4">
+                {isLoggedIn && (
+                  <button 
+                    onClick={() => setIsMobileCalendarOpen(true)}
+                    className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 lg:hidden"
+                    aria-label="Abrir calendário"
+                  >
+                    <Calendar className="h-6 w-6 text-slate-700 dark:text-slate-300" />
+                  </button>
+                )}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-l-lg text-white font-bold text-lg">P</div>
+                    <div className="flex items-center justify-center w-8 h-8 bg-slate-700 dark:bg-slate-600 rounded-r-lg text-white font-bold text-lg">T</div>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 hidden sm:block">
+                    Planner Tasks
+                  </h1>
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-slate-100 hidden sm:block">
-                  Planner Tasks
-                </h1>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
                 <div className="relative" ref={settingsMenuRef}>

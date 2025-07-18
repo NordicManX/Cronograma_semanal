@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, getDaysInMonth, startOfMonth, getDay, isSameDay, isToday, eachDayOfInterval } from 'date-fns';
+import { format, getDaysInMonth, startOfMonth, getDay, isSameDay, isToday, eachDayOfInterval, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { WEEKDAYS_SHORT } from '../data/constants';
 
@@ -13,16 +13,20 @@ const CalendarSidebar = ({ currentDate, selectedDate, onDateSelect, onMonthChang
     end: new Date(currentDate.getFullYear(), currentDate.getMonth(), daysInMonth),
   });
 
+  const handleMonthNav = (amount) => {
+    onMonthChange(addMonths(currentDate, amount));
+  };
+
   return (
     <nav className="w-full bg-transparent p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => onMonthChange(-1)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+        <button onClick={() => handleMonthNav(-1)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
           <ChevronLeft className="h-6 w-6" />
         </button>
         <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200 capitalize">
           {format(currentDate, 'MMMM yyyy', { locale: ptBR })}
         </h2>
-        <button onClick={() => onMonthChange(1)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+        <button onClick={() => handleMonthNav(1)} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
           <ChevronRight className="h-6 w-6" />
         </button>
       </div>

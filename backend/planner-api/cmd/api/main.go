@@ -41,11 +41,14 @@ func main() {
 
 		taskRoutes := api.Group("/tasks").Use(middleware.AuthMiddleware())
 		{
-			taskRoutes.POST("/", handler.CreateTask)
+			// --- CORREÇÃO APLICADA AQUI ---
+			// Alterado de "/" para "" para corresponder exatamente a /tasks
+			taskRoutes.POST("", handler.CreateTask)
+
 			taskRoutes.GET("/:date", handler.GetTasksByDay)
-			// --- NOVAS ROTAS ---
 			taskRoutes.DELETE("/:id", handler.DeleteTask)
 			taskRoutes.PUT("/:id/toggle-urgent", handler.ToggleUrgent)
+			taskRoutes.PUT("/:id/move", handler.MoveTask)
 		}
 
 		api.GET("/ping", func(c *gin.Context) {

@@ -16,6 +16,16 @@ type CreateTaskInput struct {
 	Date     string `json:"date" binding:"required"`
 }
 
+// Helper para converter uma Task do GORM para a nossa TaskResponse
+func toTaskResponse(task model.Task) model.TaskResponse {
+	return model.TaskResponse{
+		ID:       task.ID,
+		Content:  task.Content,
+		IsUrgent: task.IsUrgent,
+		Date:     task.Date.Format("2006-01-02"),
+	}
+}
+
 func CreateTask(c *gin.Context) {
 	var input CreateTaskInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -44,7 +54,7 @@ func CreateTask(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, task)
+	c.JSON(http.StatusCreated, toTaskResponse(task))
 }
 
 func GetTasksByDay(c *gin.Context) {
@@ -52,9 +62,15 @@ func GetTasksByDay(c *gin.Context) {
 	userID, _ := c.Get("userID")
 
 	var tasks []model.Task
-	database.DB.Where("user_id = ? AND DATE(date) = ?", userID, dateStr).Find(&tasks)
+	database.DB.Where("user_id = ? AND date = ?", userID, dateStr).Find(&tasks)
 
-	c.JSON(http.StatusOK, tasks)
+	// Converte a lista de tarefas para o formato de resposta
+	var taskResponses []model.TaskResponse
+	for _, task := range tasks {
+		taskResponses = append(taskResponses, toTaskResponse(task))
+	}
+
+	c.JSON(http.StatusOK, taskResponses)
 }
 
 func DeleteTask(c *gin.Context) {
@@ -86,17 +102,13 @@ func ToggleUrgent(c *gin.Context) {
 	task.IsUrgent = !task.IsUrgent
 	database.DB.Save(&task)
 
-	c.JSON(http.StatusOK, task)
+	c.JSON(http.StatusOK, toTaskResponse(task))
 }
 
-// --- NOVO CÓDIGO ABAIXO ---
-
-// MoveTaskInput define a estrutura que esperamos para mover uma tarefa.
 type MoveTaskInput struct {
 	Date string `json:"date" binding:"required"`
 }
 
-// MoveTask é o handler para mover uma tarefa para uma nova data.
 func MoveTask(c *gin.Context) {
 	taskID := c.Param("id")
 	userID, _ := c.Get("userID")
@@ -123,5 +135,5 @@ func MoveTask(c *gin.Context) {
 	task.Date = newDate
 	database.DB.Save(&task)
 
-	c.JSON(http.StatusOK, task)
+	c.JSON(http.StatusOK, toTaskResponse(task))
 }

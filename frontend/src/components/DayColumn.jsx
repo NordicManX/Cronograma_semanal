@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, ClipboardPaste } from 'lucide-react';
 import TaskCard from './TaskCard';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onDeleteTask, onAddTask, onToggleUrgent, draggingTaskId }) => {
+const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, onDeleteTask, onAddTask, onToggleUrgent, draggingTaskId, selectedTaskIdForMove, onSelectForMove, onPasteTask }) => {
   const [newTaskContent, setNewTaskContent] = useState('');
   const [isNewTaskUrgent, setIsNewTaskUrgent] = useState(false);
 
@@ -26,17 +26,31 @@ const DayColumn = ({ date, tasks, onDrop, onDragOver, onDragStart, onDragEnd, on
       onDragOver={onDragOver}
       className="bg-slate-100/70 dark:bg-slate-800/50 rounded-xl p-4 w-full flex-1 flex flex-col shadow-sm"
     >
-      <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-5 text-center capitalize tracking-wide">{formattedTitle}</h2>
+      <div className="flex justify-between items-center mb-5">
+        <h2 className="text-xl font-bold text-slate-700 dark:text-slate-200 text-center capitalize tracking-wide flex-1">{formattedTitle}</h2>
+        {/* Botão "Colar" que aparece quando uma tarefa está selecionada */}
+        {selectedTaskIdForMove && (
+          <button
+            onClick={() => onPasteTask(date)}
+            className="flex items-center gap-2 text-sm bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors animate-fade-in lg:hidden"
+          >
+            <ClipboardPaste className="h-4 w-4" />
+            Colar
+          </button>
+        )}
+      </div>
       <div className="flex-grow min-h-[100px]">
         {tasks.map(task => (
           <TaskCard 
-            key={task.id} 
+            key={task.ID} 
             task={task} 
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onDelete={(taskId) => onDeleteTask(date, taskId)}
             onToggleUrgent={(taskId) => onToggleUrgent(date, taskId)}
-            isDragging={draggingTaskId === task.id}
+            isDragging={draggingTaskId === String(task.ID)}
+            onSelectForMove={onSelectForMove}
+            isSelectedForMove={selectedTaskIdForMove === task.ID}
           />
         ))}
         {tasks.length === 0 && (

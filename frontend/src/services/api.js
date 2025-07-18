@@ -1,12 +1,10 @@
 import axios from 'axios';
 
-// Cria uma instância do axios com a URL base da nossa API em Go.
+// A barra final foi removida de 'http://localhost:8080/api/v1/'
 const api = axios.create({
   baseURL: 'http://localhost:8080/api/v1',
 });
 
-// Interceptor: Adiciona o token JWT a todos os pedidos, se ele existir.
-// Isto é crucial para aceder a rotas protegidas.
 api.interceptors.request.use(config => {
   const token = localStorage.getItem('authToken');
   if (token) {
